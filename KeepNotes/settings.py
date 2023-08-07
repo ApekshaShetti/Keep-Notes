@@ -29,7 +29,7 @@ SECRET_KEY = "django-insecure-t7(v88k*o^tq00afiqi2!!6#5ekd+_68lhnpfn_%=k^!wge)ae
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['keepnotes-vy5s.onrender.com','quicknotes-7s9t.onrender.com']
+ALLOWED_HOSTS = ['keepnotes-vy5s.onrender.com','quicknotes-7s9t.onrender.com','127.0.0.1', 'localhost']
 
 
 # Application definition
