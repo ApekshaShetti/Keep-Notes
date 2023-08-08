@@ -2,10 +2,50 @@ from django.shortcuts import render,redirect
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import Note 
-from .serializers import NoteSerializer
+from .serializers import NoteSerializer, UserSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth.models import User
+from django.db.models import Q
+from django.contrib.auth.hashers import check_password
+
 
 # Create your views here.
 
+@api_view(['POST'])
+def register(request):
+    username = request.data['username']
+    password = request.data['password']
+    email = request.data['email']
+
+    userExists = User.objects.filter(Q(username=username) | Q(email=email)).exists()
+    # userExists = UserSerializer(userExists)
+    if userExists:
+        return Response({"Failed": "Username or Email alreday exists!!!"},status=status.HTTP_409_CONFLICT,)
+        
+    
+    user = User.objects.create_user(username=username,password=password,email=email)
+    user.save()
+    user = UserSerializer(user)
+    return Response(user.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+def login(request):
+    email = request.data['email']
+    password = request.data['password']
+
+    user = User.objects.filter(Q(email=email))
+    # userExists = UserSerializer(userExists)
+    if not user.exists():
+        return Response({"Failed": "Email does not exists!!!"},status=status.HTTP_409_CONFLICT,)
+        
+    if not check_password(password,user.first().password):
+        return Response({"Failed": "Invalid Password!!!"},status=status.HTTP_401_UNAUTHORIZED)
+    user = UserSerializer(user.first())
+    return Response(user.data, status=status.HTTP_201_CREATED)
+        
 @api_view(['GET'])
 def getRoutes(request):
 
@@ -40,6 +80,18 @@ def getRoutes(request):
             'method': 'DELETE',
             'body': None,
             'description': 'Deletes and exiting note'
+        },
+        {
+            'Endpoint': '/register/',
+            'method': 'POST',
+            'body': {'body': ""},
+            'description': 'Register a user'
+        },
+        {
+            'Endpoint': '/login/',
+            'method': 'POST',
+            'body': {'body': ""},
+            'description': 'Login'
         },
     ]
 
