@@ -1,14 +1,16 @@
 from django.shortcuts import render,redirect
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from .models import Note 
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from .models import Note, User
 from .serializers import NoteSerializer, UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth.models import User
 from django.db.models import Q
 from django.contrib.auth.hashers import check_password
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
+
 
 
 # Create your views here.
@@ -25,7 +27,7 @@ def register(request):
         return Response({"Failed": "Username or Email alreday exists!!!"},status=status.HTTP_409_CONFLICT,)
         
     
-    user = User.objects.create_user(username=username,password=password,email=email)
+    user = User.objects.create(username=username,password=password,email=email)
     user.save()
     user = UserSerializer(user)
     return Response(user.data, status=status.HTTP_201_CREATED)
@@ -41,7 +43,7 @@ def login(request):
     if not user.exists():
         return Response({"Failed": "Email does not exists!!!"},status=status.HTTP_409_CONFLICT,)
         
-    if not check_password(password,user.first().password):
+    if password != user.first().password:
         return Response({"Failed": "Invalid Password!!!"},status=status.HTTP_401_UNAUTHORIZED)
     user = UserSerializer(user.first())
     return Response(user.data, status=status.HTTP_201_CREATED)
@@ -99,10 +101,17 @@ def getRoutes(request):
 
 
 # get all notes
+# @api_view(['GET'])
+# def getNotes(request):
+#     notes = Note.objects.all().order_by('-updated')
+#     serializer = NoteSerializer(notes, many=True)  # multiple object
+#     return Response(serializer.data)
+
 @api_view(['GET'])
-def getNotes(request):
-    notes = Note.objects.all().order_by('-updated')
-    serializer = NoteSerializer(notes, many=True)  # multiple object
+def getNotes(request,email):
+    # Filter notes based on the logged-in user
+    notes = Note.objects.filter(email=email).order_by('-updated')
+    serializer = NoteSerializer(notes, many=True)
     return Response(serializer.data)
 
 
@@ -114,14 +123,28 @@ def getNote(request,pk):
     return Response(serializer.data)
 
 
+# @api_view(['POST'])
+# def createNote(request):
+#     data = request.data
+#     note = Note.objects.create(
+#         body = data['body']
+#     )
+#     serializer = NoteSerializer(note, many=False)
+#     return Response(serializer.data)
+
+
 @api_view(['POST'])
 def createNote(request):
     data = request.data
+    print(data)
     note = Note.objects.create(
-        body = data['body']
+        body=data['body'],
+        email = data['email'],
     )
     serializer = NoteSerializer(note, many=False)
     return Response(serializer.data)
+
+
 
 @api_view(['PUT'])
 def updateNote(request,pk):
