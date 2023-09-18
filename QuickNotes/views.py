@@ -24,7 +24,7 @@ def register(request):
     userExists = User.objects.filter(Q(username=username) | Q(email=email)).exists()
     # userExists = UserSerializer(userExists)
     if userExists:
-        return Response({"Failed": "Username or Email alreday exists!!!"},status=status.HTTP_409_CONFLICT,)
+        return Response({"Failed": "Username or Email alreaday exists!!!"},status=status.HTTP_409_CONFLICT,)
         
     
     user = User.objects.create(username=username,password=password,email=email)
